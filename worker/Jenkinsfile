@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-    // tools {
-    //     maven 'Maven 3.6.1'
-    // }
+    tools {
+        maven 'Maven 3.6.1'
+    }
 
     stages {
         stage("build") {
@@ -29,7 +29,6 @@ pipeline {
                 dir('worker') {
                     sh 'mvn clean test'
                 }
-
             }
         }
 
