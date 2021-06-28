@@ -10,7 +10,7 @@ pipeline {
     stages{
         stage(build){
             when{
-            changeset "**/result/**"
+                changeset "**/result/**"
             }
 
 
