@@ -56,6 +56,24 @@ pipeline {
                 }
             }
         }
+
+        stage("docker-package") {
+            when {
+                branch 'master'
+                changeset "**/worker/**"
+            }
+
+        steps {
+            echo 'Packaging worker app with docker'
+            script {
+                docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-jovicons') {
+                    def workerImage = docker.build("jovicons/worker:v${env.BUILD_ID}", "./worker")
+                    workerImage.push()
+                    workerImage.push("${env.BRANCH_NAME}_latest")
+                    workerImage.push("latest")
+                }
+            }
+        }
     }
 
     post {
