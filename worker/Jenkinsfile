@@ -65,6 +65,11 @@ pipeline {
 
         stage("docker-package") {
             agent any
+            when {
+                // branch.matches("^master$")
+                changeset: "**/worker/**"
+                branch 'master'
+            }
             steps {
                 echo 'Packaging worker app with docker'
                 script {
@@ -72,7 +77,7 @@ pipeline {
                         def workerImage = docker.build("jovicons/worker:v${env.BUILD_ID}", "./worker")
                         workerImage.push()
                         // workerImage.push("${env.BRANCH_NAME}_latest")
-                        workerImage.push("latest")
+                        workerImage.push("${env.BRANCH_NAME}_latest")
                     }
                 }
             }
