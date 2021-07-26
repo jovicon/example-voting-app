@@ -1,17 +1,28 @@
 pipeline {
-    agent any
+    // agent any
+    //
+    // tools {
+    //     maven 'Maven 3.6.1'
+    // }
+    //
 
-    tools{
-        maven 'Maven 3.6.1'
-    }
+    agent none    
+    // agent {
+    //     docker {
+    //         image 'maven:3.6.1-jdk-8-slim'
+    //         args '-v $HOME/.m2:/root/.m2' // save installation on disk
+    //     }
+    // }
 
     stages {
         stage("build") {
-            when {
-                changeset "**/worker/**"
+            agent {
+                docker {
+                    image 'maven:3.6.1-jdk-8-slim'
+                    args '-v $HOME/.m2:/root/.m2' // save installation on disk
+                }
             }
-
-            steps{
+            steps {
                 echo 'Compiling worker app..'
                 dir('worker'){
                     sh 'mvn compile'
@@ -20,23 +31,27 @@ pipeline {
         }
 
         stage("test") {
-            when {
-                changeset "**/worker/**"
+            agent {
+                docker {
+                    image 'maven:3.6.1-jdk-8-slim'
+                    args '-v $HOME/.m2:/root/.m2' // save installation on disk
+                }
             }
 
-            steps{
+            steps {
                 echo 'Running Unit Tets on worker app..'
-                dir('worker'){
+                dir('worker') {
                     sh 'mvn clean test'
                 }
-
             }
         }
 
         stage("package") {
-            when {
-                branch 'master'
-                changeset "**/worker/**"
+            agent {
+                docker {
+                    image 'maven:3.6.1-jdk-8-slim'
+                    args '-v $HOME/.m2:/root/.m2' // save installation on disk
+                }
             }
 
             steps {
@@ -47,10 +62,30 @@ pipeline {
                 }
             }
         }
-    }
 
+        stage("docker-package") {
+            agent any
+            when {
+                // branch.matches("^master$")
+                changeset "**/worker/**"
+                branch 'master'
+            }
+            steps {
+                echo 'Packaging worker app with docker'
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-jovicons') {
+                        def workerImage = docker.build("jovicons/worker:v${env.BUILD_ID}", "./worker")
+                        workerImage.push()
+                        // workerImage.push("${env.BRANCH_NAME}_latest")
+                        workerImage.push("${env.BRANCH_NAME}_latest")
+                    }
+                }
+            }
+        }
+    }
+    
     post {
-        always{
+        always {
             echo 'Building multibranch pipeline for worker is completed..'
         }
     }
