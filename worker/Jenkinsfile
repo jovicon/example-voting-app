@@ -67,7 +67,7 @@ pipeline {
             agent any
             when {
                 // branch.matches("^master$")
-                changeset: "**/worker/**"
+                changeset "**/worker/**"
                 branch 'master'
             }
             steps {
